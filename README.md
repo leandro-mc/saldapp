@@ -46,9 +46,39 @@ This monorepo contains both halves of the project, with the full commit history 
 └────────────────────┘                 └──────────────────────────┘     └────────────┘
 ```
 
-## Run it locally
+## Run with Docker (recommended)
 
-Requirements: JDK 21+, Maven, Docker and Node.js 22+.
+The only requirement is **Docker** (with Compose). No JDK, Maven or Node needed.
+
+```bash
+git clone https://github.com/leandro-mc/saldapp.git
+cd saldapp
+docker compose up --build
+```
+
+Then open **http://localhost:5173**. On the first start a one-shot `seed` service loads fictional demo data (3 groups: an open trip with 7 members and 12 expenses, a shared-flat group, and a closed group), so there is something to see right away. On the home screen use **"Ingresar a grupo existente"** with group IDs **1**, **2** or **3**.
+
+| Service | URL |
+|---|---|
+| Web app | http://localhost:5173 |
+| API | http://localhost:8080 |
+| Swagger UI | http://localhost:8080/swagger-ui/index.html |
+| PostgreSQL | `localhost:5435` (`saldapp` / `saldapp`) |
+
+Useful commands:
+
+```bash
+docker compose up --build -d      # run in the background
+docker compose logs -f backend    # follow the API logs
+docker compose down               # stop (data is kept in a volume)
+docker compose down -v            # stop and wipe the database; demo data is reloaded on the next up
+```
+
+Ports, DB credentials and `SEED_DEMO_DATA=false` (start with an empty database) can be changed by copying [`.env.example`](.env.example) to `.env`. The seed only runs on an empty database, so it never touches groups you created yourself. You can also run it by hand against any running API: `node seed/seed.mjs`.
+
+## Run without Docker
+
+Requirements: JDK 21+, Maven, Docker (for PostgreSQL) and Node.js 22+.
 
 ```bash
 git clone https://github.com/leandro-mc/saldapp.git

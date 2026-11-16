@@ -46,9 +46,39 @@ Este monorepo contiene las dos partes del proyecto, conservando el historial com
 └────────────────────┘                 └──────────────────────────┘     └────────────┘
 ```
 
-## Ejecutar en local
+## Ejecutar con Docker (recomendado)
 
-Requisitos: JDK 21+, Maven, Docker y Node.js 22+.
+El único requisito es **Docker** (con Compose). No hace falta JDK, Maven ni Node.
+
+```bash
+git clone https://github.com/leandro-mc/saldapp.git
+cd saldapp
+docker compose up --build
+```
+
+Después abrí **http://localhost:5173**. En el primer arranque un servicio `seed` de una sola ejecución carga datos de demo ficticios (3 grupos: un viaje abierto con 7 integrantes y 12 gastos, un grupo de casa compartida y un grupo cerrado), para que haya algo que ver desde el principio. En la pantalla de inicio usá **"Ingresar a grupo existente"** con los IDs **1**, **2** o **3**.
+
+| Servicio | URL |
+|---|---|
+| App web | http://localhost:5173 |
+| API | http://localhost:8080 |
+| Swagger UI | http://localhost:8080/swagger-ui/index.html |
+| PostgreSQL | `localhost:5435` (`saldapp` / `saldapp`) |
+
+Comandos útiles:
+
+```bash
+docker compose up --build -d      # correr en segundo plano
+docker compose logs -f backend    # ver los logs de la API
+docker compose down               # detener (los datos quedan en un volumen)
+docker compose down -v            # detener y borrar la base; los datos de demo se recargan en el próximo up
+```
+
+Los puertos, las credenciales de la BD y `SEED_DEMO_DATA=false` (arrancar con la base vacía) se cambian copiando [`.env.example`](.env.example) a `.env`. El seed solo corre sobre una base vacía, así que nunca toca los grupos que hayas creado vos. También podés ejecutarlo a mano contra cualquier API en marcha: `node seed/seed.mjs`.
+
+## Ejecutar sin Docker
+
+Requisitos: JDK 21+, Maven, Docker (para PostgreSQL) y Node.js 22+.
 
 ```bash
 git clone https://github.com/leandro-mc/saldapp.git
