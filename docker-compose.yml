@@ -1,0 +1,83 @@
+# ================================================================
+#  SaldApp — full stack with Docker (only Docker is required)
+#
+#    docker compose up --build        # db + api + web + demo data
+#    open http://localhost:5173
+#
+#  Optional: copy .env.example to .env to change ports/credentials.
+#  Stop:             docker compose down
+#  Stop + wipe data: docker compose down -v
+# ================================================================
+name: saldapp
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: saldapp
+      POSTGRES_USER: ${DB_USERNAME:-saldapp}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-saldapp}
+    ports:
+      - "${DB_PORT:-5435}:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-saldapp} -d saldapp"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      APP_PORT: "8080"
+      DB_URL: jdbc:postgresql://db:5432/saldapp
+      DB_USERNAME: ${DB_USERNAME:-saldapp}
+      DB_PASSWORD: ${DB_PASSWORD:-saldapp}
+      # Origin of the web app as seen by the browser (CORS)
+      CORS_ALLOWED_ORIGINS: http://localhost:${FRONTEND_PORT:-5173}
+      # Quieter logs than the default dev profile
+      SPRING_JPA_SHOW_SQL: "false"
+      LOGGING_LEVEL_COM_LMORA_SALDAPP: INFO
+      LOGGING_LEVEL_ORG_HIBERNATE_SQL: WARN
+      LOGGING_LEVEL_ORG_HIBERNATE_TYPE_DESCRIPTOR_SQL: WARN
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # URL the browser uses to reach the API (baked in at build time)
+        VITE_API_BASE_URL: http://localhost:${BACKEND_PORT:-8080}
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_PORT:-5173}:80"
+
+  # One-shot job: loads fictional demo data through the REST API.
+  # It only runs on an empty database and exits when done.
+  # Disable with SEED_DEMO_DATA=false
+  seed:
+    image: node:22-alpine
+    depends_on:
+      - backend
+    working_dir: /seed
+    volumes:
+      - ./seed:/seed:ro
+    environment:
+      API_URL: http://backend:8080
+      SEED_DEMO_DATA: ${SEED_DEMO_DATA:-true}
+      FRONTEND_URL: http://localhost:${FRONTEND_PORT:-5173}
+    command: ["node", "seed.mjs"]
+    restart: "no"
+
+volumes:
+  db_data:
