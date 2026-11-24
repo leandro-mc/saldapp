@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { useCreateGroup } from '../hooks/useCreateGroup'
 import GroupForm from '../components/group/GroupForm'
+import { DemoSampleGroups } from '../components/demo/lazyDemo.jsx'
 
 function HomePage() {
     const navigate = useNavigate()
@@ -64,6 +65,9 @@ function HomePage() {
                 </div>
                 
             </div>
+
+            {/* Only renders in demo mode */}
+            <DemoSampleGroups />
         </div>
     )
 }
