@@ -1,8 +1,9 @@
 import axios from 'axios'
+import { apiBaseUrl } from './env'
 import { parseApiError } from '../utils/errorParser'
 
 const httpClient = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL,
+    baseURL: apiBaseUrl,
     headers: {
         'Content-Type': 'application/json'
     }
