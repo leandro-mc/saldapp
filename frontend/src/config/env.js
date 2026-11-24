@@ -12,6 +12,17 @@
 /** True when the app must run against the in-browser mock instead of a real backend. */
 export const isDemoMode = import.meta.env.VITE_DEMO_MODE === 'true'
 
+/**
+ * Loads the demo-only code (mock backend and demo UI), or is null when the demo is off.
+ *
+ * The `import()` lives here, next to the variable it depends on, because that is what lets the
+ * bundler see a constant condition and not emit the demo chunk at all in non-demo builds.
+ * Everything demo-related must be reached through this function and nowhere else.
+ *
+ * @type {(() => Promise<typeof import('../demo/index.js')>) | null}
+ */
+export const loadDemo = import.meta.env.VITE_DEMO_MODE === 'true' ? () => import('../demo/index.js') : null
+
 /** Base URL of the real API. Unused while `isDemoMode` is true. */
 export const apiBaseUrl = import.meta.env.VITE_API_BASE_URL
 
