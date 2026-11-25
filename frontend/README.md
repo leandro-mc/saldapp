@@ -45,7 +45,7 @@ npm run dev              # http://localhost:5173
 
 ## Demo mode (no backend)
 
-With `VITE_DEMO_MODE=true` the app runs without a backend: an in-browser mock answers with sample groups and a banner says so. It lets you publish the frontend (e.g. on Vercel) as a portfolio piece. Switching modes requires a rebuild and redeploy. Full guide, Vercel settings and known limitations in [docs/demo-mode.md](docs/demo-mode.md) (in Spanish).
+With `VITE_DEMO_MODE=true` the app runs without a backend: an in-browser mock answers with sample groups and a banner says so. It lets you publish the frontend (e.g. on Vercel) as a portfolio piece. Switching modes requires a rebuild and redeploy. Full guide, Vercel settings and known limitations in [docs/demo-mode.md](docs/demo-mode.md); UI and accessibility decisions in [docs/ux-research.md](docs/ux-research.md) (both in Spanish).
 
 ```bash
 VITE_DEMO_MODE=true npm run dev
