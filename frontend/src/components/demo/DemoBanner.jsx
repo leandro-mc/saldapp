@@ -42,7 +42,9 @@ function DemoBanner() {
 
             <ConfirmDialog
                 isOpen={isConfirming}
-                message="¿Restablecer los datos de demo? Se perderán tus cambios y volverás a los grupos de ejemplo."
+                title="Restablecer datos de demo"
+                message="Se perderán tus cambios y volverás a los grupos de ejemplo."
+                confirmLabel="Restablecer"
                 onConfirm={handleReset}
                 onCancel={() => setIsConfirming(false)}
             />

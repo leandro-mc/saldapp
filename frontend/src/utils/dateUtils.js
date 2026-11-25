@@ -18,3 +18,10 @@ export function formatDateTime(isoString) {
     })
 }
 
+
+/** Today as the value of an <input type="date"> (yyyy-MM-dd, local time). */
+export function todayInputValue() {
+    const now = new Date()
+    const pad = value => String(value).padStart(2, '0')
+    return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
+}

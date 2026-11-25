@@ -67,7 +67,7 @@ function GroupDetail({ group, onEdit, onClose, isClosed }) {
             {/* Metadata grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-gray-100">
                 <div>
-                    <p className="text-xs tex-gray-500 uppercase tracking-wide">ID del grupo</p>
+                    <p className="text-xs text-gray-500 uppercase tracking-wide">ID del grupo</p>
                     <p className="font-semibold text-gray-800">{group.id}</p>
                 </div>
                 <div>
@@ -96,7 +96,9 @@ function GroupDetail({ group, onEdit, onClose, isClosed }) {
 
             <ConfirmDialog 
                 isOpen={dialog.isOpen}
-                message={"¿Estas seguro de que deseas cerrar el grupo? Esta acción no se puede deshacer."}
+                title="Cerrar grupo"
+                message="¿Seguro que querés cerrar el grupo? Después no se podrán agregar ni editar gastos ni integrantes, y esta acción no se puede deshacer."
+                confirmLabel="Cerrar grupo"
                 onConfirm={handleConfirm}
                 onCancel={handleCancel}
             />

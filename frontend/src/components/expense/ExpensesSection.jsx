@@ -3,6 +3,7 @@ import { useExpense } from "../../hooks/useExpense"
 import LoadingState from "../shared/LoadingState"
 import ExpenseForm from "./ExpenseForm"
 import ExpenseList from "./ExpenseList"
+import Card from "../shared/Card"
 
 function ExpensesSection({groupId, isClosed, groupCurrency, integrants, selectedIntegrant, onMutation}){
     const { integrantExpenses, loading, error, loadByIntegrant, addExpense, updateExpense, removeExpense } = useExpense(groupId)
@@ -24,22 +25,26 @@ function ExpensesSection({groupId, isClosed, groupCurrency, integrants, selected
         )
 
     if (editingExpense && !isClosed) return (
-        <div className="flex-1 w-full bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+        <Card title="Editar gasto" className="flex-1 w-full">
             <ExpenseForm 
                 key={editingExpense.id}
+                isEditing
                 initialData={editingExpense}
                 integrants={integrants}
+                groupCurrency={groupCurrency}
                 loading={loading}
                 error={error}
+                onCancel={() => setEditingExpense(null)}
                 onSubmit={async (data) => {
                     const updated = await updateExpense(editingExpense.id, data)
                     if (updated) {
                         setEditingExpense(null)
                         handleMutation()
                     }
+                    return updated
                 }}
             />
-        </div>
+        </Card>
     )
 
     if (!selectedIntegrant && isClosed) return null
@@ -71,17 +76,19 @@ function ExpensesSection({groupId, isClosed, groupCurrency, integrants, selected
         
         {!isClosed && ( 
             <div className="flex-1 w-full space-y-4">
-                <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+                <Card title="Agregar gasto">
                     <ExpenseForm 
                         integrants={integrants}
+                        groupCurrency={groupCurrency}
                         loading={loading}
                         error={error}
                         onSubmit={async (data) => {
                             const created = await addExpense(data)
-                            if (created) handleMutation()                
+                            if (created) handleMutation()
+                            return created
                         }}
                     />
-                </div>
+                </Card>
             </div>
         )}        
         

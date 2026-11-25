@@ -107,7 +107,9 @@ function IntegrantList({ groupCurrency, integrantsBalances, onEdit, onDelete, on
             </div>
             <ConfirmDialog 
                 isOpen={dialog.isOpen}
-                message={"¿Estas seguro de que deseas eliminar al integrante?"}
+                title="Eliminar integrante"
+                message="¿Seguro que querés eliminar a este integrante?"
+                confirmLabel="Eliminar"
                 onConfirm={handleConfirm}
                 onCancel={handleCancel}
             />

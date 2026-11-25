@@ -1,4 +1,7 @@
-function SelectList({ options, getLabel, getValue, value, onChange, placeholder, disabled }){
+import { controlClassName } from './controlStyles'
+
+/** `...controlProps` are the id and aria-* props FormField hands to its control. */
+function SelectList({ options, getLabel, getValue, value, onChange, placeholder, disabled, ...controlProps }){
     const handleChange = (e) => {
         const index = e.target.value
         if (index === '') return onChange(null)
@@ -14,9 +17,8 @@ function SelectList({ options, getLabel, getValue, value, onChange, placeholder,
             value={selectedIndex === -1 ? '' : selectedIndex}
             onChange={handleChange}
             disabled={disabled}
-            className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-sm
-                        bg-white focus:outline-none focus:border-blue-500 focus:ring-1
-                        focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+            className={controlClassName}
+            {...controlProps}
         >
             {placeholder && <option value="">{placeholder}</option>}
             {options.map((opt, i) => (

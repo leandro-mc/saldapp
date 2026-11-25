@@ -1,86 +1,105 @@
 import { useState } from 'react'
+import { todayInputValue } from '../../utils/dateUtils'
+import { useFormValidation } from '../../hooks/useFormValidation'
+import Button from '../shared/Button'
 import ErrorMessage from '../shared/ErrorMessage'
+import FormField from '../shared/FormField'
 import SelectList from '../shared/SelectList'
+import { controlClassName } from '../shared/controlStyles'
 
-function GroupForm({ isEditing = false, initialData = {}, onSubmit, loading, error }) {
+const CURRENCIES = ['₡', '$', '€', '£', '¥', 'CHF ', 'R$', 'S/', '$U ', '₲', 'Bs.', 'RD$', 'Q ', 'L ', 'C$', 'B/.']
+
+/**
+ * Creates a group, or edits one (`isEditing`: the start date can't change, so it isn't asked again).
+ * The title is up to whoever contains the form.
+ */
+function GroupForm({ isEditing = false, initialData = {}, onSubmit, onCancel, loading, error }) {
     const [name, setName] = useState(initialData.name || '')
     const [description, setDescription] = useState(initialData.description || '')
-    const [startDate, setStartDate] = useState(initialData.startDate || '')
+    const [startDate, setStartDate] = useState(todayInputValue())
     const [currency, setCurrency] = useState(initialData.currency || '')
+    const { formRef, errorOf, check, clear } = useFormValidation(error)
 
     function handleSubmit(e) {
         e.preventDefault()
-        const isoDate = startDate ? startDate + 'T00:00:00' : ''
-        onSubmit({ name, description, currency, startDate: isoDate })
+
+        const problems = {}
+        if (!name.trim()) problems.name = 'Ingresá un nombre para el grupo.'
+        if (!currency) problems.currency = 'Elegí la moneda del grupo.'
+        if (!isEditing && !startDate) problems.startDate = 'Elegí la fecha de inicio.'
+        if (!check(problems)) return
+
+        onSubmit({
+            name,
+            description,
+            currency,
+            ...(isEditing ? {} : { startDate: startDate + 'T00:00:00' }),
+        })
     }
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-4">
-            <h2 className="text-2xl font-bold text-blue-600 mb-6 border-b pb-3">
-                {isEditing ? 'Editar grupo' : 'Agregar grupo'}
-            </h2>
+        <form ref={formRef} onSubmit={handleSubmit} noValidate className="space-y-4">
+            <FormField label="Nombre del grupo" error={errorOf('name')}>
+                {props => (
+                    <input
+                        {...props}
+                        value={name}
+                        onChange={e => { setName(e.target.value); clear('name') }}
+                        placeholder="Ej: Viaje a la playa"
+                        autoComplete="off"
+                        className={controlClassName}
+                    />
+                )}
+            </FormField>
 
-            <div>    
-                <label className="block text-sm font-medium text-gray-700">Moneda</label>   
-                <SelectList
-                    options={['₡', '$', '€', '£', '¥', 'CHF ', 'R$', 'S/', '$U ', '₲', 'Bs.', 'RD$', 'Q ', 'L ', 'C$', 'B/.']}
-                    getLabel={c => c}
-                    getValue={c => c}
-                    value={currency}
-                    onChange={setCurrency}
-                    placeholder="Seleccionar moneda"
-                />
-            </div> 
-
-            <div>  
-                <label clasName="block text-sm font medium text-gray-700">Nombre del Grupo</label>
-                <input 
-                    value={name} 
-                    onChange={e => setName(e.target.value)} 
-                    placeholder='Ej: Viaje a la Playa' 
-                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-sm focus:outline-none 
-                                focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                />
-            </div>  
-
-            <div>
-                <label clasName="block text-sm font medium text-gray-700"> 
-                    Descripción
-                    <span className="text-gray-400 font-normal ml-1">(optional)</span>
-                </label>
-                <textarea 
-                    value={description} 
-                    onChange={e => setDescription(e.target.value)} 
-                    rows={2}
-                    placeholder='Descripción del grupo' 
-                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-sm focus:outline-none 
-                                focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none"
-                /> 
-            </div> 
+            <FormField label="Moneda" error={errorOf('currency')}>
+                {props => (
+                    <SelectList
+                        {...props}
+                        options={CURRENCIES}
+                        getLabel={c => c}
+                        getValue={c => c}
+                        value={currency}
+                        onChange={value => { setCurrency(value); clear('currency') }}
+                        placeholder="Seleccionar moneda"
+                    />
+                )}
+            </FormField>
 
             {!isEditing && (
-                <div>
-                    <label clasName="block text-sm font medium text-gray-700">Fecha de inicio</label>
-                    <input 
-                        type='date' 
-                        value={startDate} 
-                        onChange={e => setStartDate(e.target.value)} 
-                        className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-sm focus:outline-none 
-                                focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                    />
-                </div>
-            )}          
-        
-            <button 
-                type='submit' 
-                disabled={loading}
-                className=" w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors
-                            font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-                {loading ? 'Guardando...' : 'Guardar'}
-            </button>
+                <FormField label="Fecha de inicio" error={errorOf('startDate')}>
+                    {props => (
+                        <input
+                            {...props}
+                            type="date"
+                            value={startDate}
+                            onChange={e => { setStartDate(e.target.value); clear('startDate') }}
+                            className={controlClassName}
+                        />
+                    )}
+                </FormField>
+            )}
 
-            <ErrorMessage error={error} />
+            <FormField label="Descripción" optional error={errorOf('description')}>
+                {props => (
+                    <textarea
+                        {...props}
+                        value={description}
+                        onChange={e => setDescription(e.target.value)}
+                        rows={2}
+                        className={`${controlClassName} resize-none`}
+                    />
+                )}
+            </FormField>
+
+            <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                {onCancel && <Button onClick={onCancel}>Cancelar</Button>}
+                <Button type="submit" variant="primary" disabled={loading} className={onCancel ? '' : 'w-full'}>
+                    {loading ? 'Guardando…' : isEditing ? 'Guardar cambios' : 'Crear grupo'}
+                </Button>
+            </div>
+
+            <ErrorMessage error={error} inline />
         </form>
     )
 }

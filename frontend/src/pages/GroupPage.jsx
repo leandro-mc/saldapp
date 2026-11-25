@@ -4,6 +4,7 @@ import { useGroup } from '../hooks/useGroup'
 import { useIntegrant } from '../hooks/useIntegrant'
 import GroupDetail from '../components/group/GroupDetail'
 import GroupForm from '../components/group/GroupForm'
+import Card from '../components/shared/Card'
 import LoadingState from '../components/shared/LoadingState'
 import ErrorMessage from '../components/shared/ErrorMessage'
 import IntegrantsSection from '../components/integrant/IntegrantsSection'
@@ -38,16 +39,19 @@ function GroupPage() {
 
     if (isEditing) return (
         <div className="max-w-2xl mx-auto px-4 py-6 md:px-8 space-y-6">
-            <GroupForm 
-                isEditing={isEditing}
-                initialData={group}
-                loading={actionLoading}
-                error={actionError}
-                onSubmit={async (data) => {
-                    const updated = await update(data)
-                    if (updated) setIsEditing(false)
-                }}
-            />
+            <Card title="Editar grupo">
+                <GroupForm 
+                    isEditing={isEditing}
+                    initialData={group}
+                    loading={actionLoading}
+                    error={actionError}
+                    onCancel={() => setIsEditing(false)}
+                    onSubmit={async (data) => {
+                        const updated = await update(data)
+                        if (updated) setIsEditing(false)
+                    }}
+                />
+            </Card>
         </div>
     )
 

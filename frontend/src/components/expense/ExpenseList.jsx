@@ -40,7 +40,7 @@ function ExpenseList({ groupCurrency, expenses, integrant, onEdit, onDelete, dis
                         <tr>
                             <th className="py-2 px-3 font-medium">#</th>
                             <th className="py-2 px-3 font-medium">Fecha</th>
-                            <th className="py-2 px-3 font-medium">Descripcion</th>
+                            <th className="py-2 px-3 font-medium">Descripción</th>
                             <th className="py-2 px-3 font-medium">Monto {groupCurrency}</th>                       
                             <th className="py-2 px-3 font-medium text-center">Acciones</th>
                         </tr>
@@ -91,7 +91,9 @@ function ExpenseList({ groupCurrency, expenses, integrant, onEdit, onDelete, dis
 
             <ConfirmDialog 
                 isOpen={dialog.isOpen}
-                message={"¿Estas seguro de que deseas eliminar el gasto?"}
+                title="Eliminar gasto"
+                message="¿Seguro que querés eliminar este gasto?"
+                confirmLabel="Eliminar"
                 onConfirm={handleConfirm}
                 onCancel={handleCancel}
             />
