@@ -3,7 +3,7 @@ import Button from './Button'
 
 /**
  * Modal window on the native <dialog>: the browser traps focus inside, makes the rest of the page
- * inert, closes on Escape and returns focus to the trigger. `isOpen` stays the source of truth:
+ * inert and closes on Escape. `isOpen` stays the source of truth:
  * Escape and clicks on the backdrop only ask to close through `onClose`.
  *
  * The content is mounted only while open, so every opening starts from a clean form.
@@ -15,16 +15,21 @@ import Button from './Button'
  */
 function Modal({ isOpen, title, onClose, children }) {
     const dialogRef = useRef(null)
+    const opener = useRef(null)
     const titleId = useId()
 
     useEffect(() => {
         const dialog = dialogRef.current
         if (isOpen && !dialog.open) {
+            opener.current = document.activeElement
             dialog.showModal()
             // Land on what the user is about to use: an explicitly marked element, else the first field
             dialog.querySelector('[data-autofocus], input, select, textarea')?.focus()
         } else if (!isOpen && dialog.open) {
             dialog.close()
+            // Back to what opened the window. Done by hand: the focused button inside is already gone
+            // from the page by now, and the browser's own restoration is not dependable in that case.
+            if (opener.current?.isConnected) opener.current.focus()
         }
     }, [isOpen])
 

@@ -24,17 +24,13 @@ export function useBalance(groupId) {
 
     }, [groupId])
 
+    // Background re-read: keeps the current list on screen instead of going back to a loading state
     async function refresh() {
-        setLoading(true)
-        setError(null)
         try{
-            const foundBalancesIntegrants = await getBalancesByGroup(groupId)
-            setIntegrantsBalances(foundBalancesIntegrants)
+            setIntegrantsBalances(await getBalancesByGroup(groupId))
         } catch (error) {
             setError(error)
-        } finally {
-            setLoading(false)
-        }                  
+        }
     }
 
     async function findIntegrantBalance(integrantId) {

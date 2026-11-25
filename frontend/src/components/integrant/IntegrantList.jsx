@@ -1,118 +1,80 @@
-import { useState } from "react"
-import ConfirmDialog from "../shared/ConfirmDialog"
-import { formatMoney } from "../../utils/moneyUtils"
+import { formatMoney, formatSignedMoney } from "../../utils/moneyUtils"
+import BalanceAmount from "../shared/BalanceAmount"
+import Button from "../shared/Button"
 
-function IntegrantList({ groupCurrency, integrantsBalances, onEdit, onDelete, onDetails, disabled }){
-
-    const [dialog, setDialog] = useState({ isOpen: false, integrantId: null })
-
-    function handleDeleteClick(integrantId) {
-        setDialog({ isOpen: true, integrantId})
-    }
-
-    async function handleConfirm() {
-        await onDelete(dialog.integrantId)
-        setDialog({ isOpen: false, integrantId: null })
-    }
-
-    function handleCancel() {
-        setDialog({ isOpen: false, integrantId: null })
-    }
-
+/**
+ * One row per integrant: who they are, what they paid, what they are owed or owe, and what can be done.
+ * Rows (not a table) so they reflow on a phone without hiding the actions off-screen.
+ *
+ * @param {Object} props
+ * @param {number | undefined} props.selectedId  Integrant whose expenses are being shown
+ * @param {boolean} props.disabled               Closed group: nothing can be changed
+ */
+function IntegrantList({ groupCurrency, integrantsBalances, selectedId, onSelect, onEdit, onDelete, disabled }){
     if (integrantsBalances.length === 0) return (
-    <div className="py-8 text-center">
-        <p className="text-sm text-gray-400">No hay integrantes en este grupo.</p>
-        <p className="text-xs text-gray-400 mt-1">Agregá el primero usando el formulario.</p>
-    </div>    
+        <div className="py-8 text-center">
+            <p className="text-sm font-medium text-gray-700">Todavía no hay integrantes en este grupo.</p>
+            {!disabled && <p className="mt-1 text-sm text-gray-600">Agregá a quienes comparten los gastos con «Agregar integrante».</p>}
+        </div>
     )
 
-    const balance = integrantsBalances.reduce((acc, b) => acc + b.balance, 0)
-    const total = integrantsBalances.reduce((acc, b) => acc + b.totalPaid, 0)
-
+    const totalPaid = integrantsBalances.reduce((acc, b) => acc + b.totalPaid, 0)
+    const balanceSum = integrantsBalances.reduce((acc, b) => acc + b.balance, 0)
+    const leftoverCents = Math.round(balanceSum * 100)
 
     return (
         <>
-            <h3 className="text-base font-bold text-gray-800 mb-3">Integrantes</h3>
-            <div className="overflow-x-auto">
-                <table className="min-w-full text-sm text-left">
-                    <thead className="bg-gray-50 text-gray-600">
-                        <tr>
-                            <th className="py-2 px-3 font-medium">#</th>
-                            <th className="py-2 px-3 font-medium">Nombre</th>
-                            <th className="py-2 px-3 font-medium">Gastado</th>
-                            <th className="py-2 px-3 font-medium">Balance({groupCurrency})</th>
-                            <th className="py-2 px-3 font-medium text-center">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                        {integrantsBalances.map((balance, index) => {
-                            return (
-                                <tr 
-                                    key={balance.integrantId}
-                                    className="hover:bg-gray-50 transition-colors"
-                                >
-                                    <td className="py-2 px-3 text-gray-500">{index + 1}</td>
-                                    <td className="py-2 px-3 font-medium text-gray-800">{balance.integrantName}</td>
-                                    <td className="py-2 px-3 text-gray-700">{formatMoney(balance.totalPaid, groupCurrency)}</td>
-                                    
-                                    <td className={`py-2 px-3 font-medium ${
-                                        balance.balance > 0
-                                        ? 'text-green-700'
-                                        : balance.balance < 0
-                                        ? 'text-red-700'
-                                        : 'text-gray-600'
-                                    }`}>
-                                        {balance.balance > 0 ? '+' : ''}{formatMoney(balance.balance)}
-                                    </td>
-                                    
-                                    <td className="py-2 px-3 text-center space-x-2">
-                                        <button 
-                                            onClick={() => onEdit(balance.integrantId)} 
-                                            disabled={disabled}
-                                            className="text-blue-600 hover:text-blue-800 text-xs font-medium disabled:opacity-40
-                                                        disabled:cursor-not-allowed"
-                                        >
-                                            Editar
-                                        </button>
-                                        <button 
-                                            onClick={() => handleDeleteClick(balance.integrantId)} 
-                                            disabled={disabled}
-                                            className="text-red-700 hover:text-red-900 text-xs font-medium disabled:opacity-40
-                                                        disabled:cursor-not-allowed"
-                                        >
-                                            Eliminar
-                                        </button>
-                                        <button 
-                                            onClick={() => onDetails(balance.integrantId)}
-                                            className="text-gray-500 hover:text-gray-700 text-xs font-medium"
-                                        >
-                                            Detalles
-                                        </button>
-                                    </td>
-                                </tr>
-                            )
-                        })}
-                    </tbody>
-                    {/* table footer with the total */}
-                    <tfoot className="border-t border-gray-200 bg-gray-50">
-                        <tr>
-                            <td className="py-2 px-3"></td>
-                            <td className="py-2 px-3 font-semibold text-gray-700">Total</td>
-                            <td className="py-2 px-3 font-bold text-blue-600">{formatMoney(total, groupCurrency)}</td>                            
-                            <td className="py-2 px-3 font-bold text-blue-600">{formatMoney(balance, groupCurrency)}</td>
-                            <td></td>
-                        </tr>
-                    </tfoot>
-                </table>
+            <ul className="divide-y divide-gray-100">
+                {integrantsBalances.map(balance => {
+                    const isSelected = balance.integrantId === selectedId
+                    const name = balance.integrantName
+                    return (
+                        <li key={balance.integrantId} className={`px-2 py-3 md:px-3 ${isSelected ? 'rounded-md bg-blue-50 ring-1 ring-blue-200' : ''}`}>
+                            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+                                <div className="min-w-0 flex-1 basis-40">
+                                    <p className="break-words font-semibold text-gray-900">{name}</p>
+                                    <p className="text-sm text-gray-600">Pagó {formatMoney(balance.totalPaid, groupCurrency)}</p>
+                                </div>
+
+                                <BalanceAmount amount={balance.balance} currency={groupCurrency} />
+
+                                <div className="flex w-full flex-wrap gap-2 md:w-auto">
+                                    <Button
+                                        size="sm"
+                                        aria-pressed={isSelected}
+                                        aria-label={`Ver gastos de ${name}`}
+                                        onClick={() => onSelect(isSelected ? null : balance.integrantId)}
+                                        className={isSelected ? 'border-blue-600 bg-blue-100 text-blue-900' : ''}
+                                    >
+                                        Ver gastos
+                                    </Button>
+                                    {!disabled && (
+                                        <>
+                                            <Button size="sm" variant="quiet" aria-label={`Editar a ${name}`} onClick={() => onEdit(balance)}>
+                                                Editar
+                                            </Button>
+                                            <Button size="sm" variant="danger" aria-label={`Eliminar a ${name}`} onClick={() => onDelete(balance)}>
+                                                Eliminar
+                                            </Button>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        </li>
+                    )
+                })}
+            </ul>
+
+            <div className="mt-3 flex items-center justify-between border-t border-gray-200 pt-3 text-sm">
+                <span className="font-semibold text-gray-800">Total pagado</span>
+                <span className="font-bold text-blue-700">{formatMoney(totalPaid, groupCurrency)}</span>
             </div>
-            <ConfirmDialog 
-                isOpen={dialog.isOpen}
-                title="Eliminar integrante"
-                message="¿Seguro que querés eliminar a este integrante?"
-                confirmLabel="Eliminar"
-                onConfirm={handleConfirm}
-                onCancel={handleCancel}
-            />
+            {leftoverCents !== 0 && (
+                <p className="mt-2 text-xs text-gray-600">
+                    Los balances suman {formatSignedMoney(balanceSum, groupCurrency)}: al repartir en partes iguales,
+                    los centavos que sobran no se asignan a nadie.
+                </p>
+            )}
         </>
     )
 }

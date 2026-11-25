@@ -1,64 +1,38 @@
-import { useEffect } from "react";
-import { useSettlement } from "../../hooks/useSettlement";
-import LoadingState from "../shared/LoadingState";
-import ErrorMessage from "../shared/ErrorMessage";
-import SettlementList from "./SettlementList";
+import { useEffect, useState } from "react"
+import { useSettlement } from "../../hooks/useSettlement"
+import Card from "../shared/Card"
+import ErrorMessage from "../shared/ErrorMessage"
+import LoadingState from "../shared/LoadingState"
+import SettlementList from "./SettlementList"
 
-function SettlementSection({ groupId, isClosed, groupCurrency, showSettlement, onToggle, refreshTrigger  }) {
+/**
+ * The payments that settle the group. Always visible: it is what people open the group to find out.
+ * It is read again whenever `version` changes (the page bumps it after any change).
+ */
+function SettlementSection({ groupId, isClosed, groupCurrency, version }) {
     const { settlements, loading, error, loadSettlement } = useSettlement(groupId)
+    const [hasLoaded, setHasLoaded] = useState(false)
 
     useEffect(() => {
-        if (isClosed || (showSettlement && refreshTrigger > 0)) loadSettlement()
+        loadSettlement().then(() => setHasLoaded(true))
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isClosed, refreshTrigger])
-
-    if (loading) return (
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <LoadingState />
-        </div>
-    )
-
-    if (error) return (
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <ErrorMessage />
-        </div>
-    )
-
-    if (isClosed) return (
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <div className="flex items-center gap-3 mb-3 border-b border-blue-700 pb-2">
-                <h3 className="text-xl font-bold text-blue-700">Liquidación Final</h3>
-                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs
-                                 font-medium bg-red-100 text-red-700">
-                    Grupo cerrado
-                </span>                
-            </div>
-            <SettlementList settlements={settlements} groupCurrency={groupCurrency}/>
-        </div>
-    )
+    }, [version])
 
     return (
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <div className="flex justify-between items-center border-b mb-3 border-blue-700 pb-2">
-                {showSettlement && (  
-                    <h3 className="text-xl font-bold text-blue-700">Liquidación estimada</h3>
-                )}
-                <button 
-                    onClick={() => {
-                        onToggle()
-                        if (!showSettlement) loadSettlement()
-                    }}
-                    className="text-sm bg-blue-50 text-blue-600 px-4 py-2 rounded
-                                border border-blue-200 hover:bg-blue-100 transition-colors"
-                >
-                    {showSettlement ? 'Ocultar liquidación' : 'Ver liquidación actual'}
-                </button>
-            </div>
+        <Card title={isClosed ? 'Liquidación final' : 'Cómo saldar las cuentas'}>
+            <p className="-mt-2 mb-3 text-sm text-gray-600">
+                {isClosed
+                    ? 'Los pagos con los que quedó saldado el grupo.'
+                    : 'Pagos sugeridos para saldar las deudas con pocas transferencias.'}
+            </p>
 
-            {showSettlement && (                   
-                <SettlementList settlements={settlements} groupCurrency={groupCurrency} />                
-            )}
-        </div>
+            {/* On a re-read the previous payments stay (dimmed) instead of being replaced by a loader */}
+            <div aria-busy={loading} className={loading && hasLoaded ? 'opacity-60' : ''}>
+                {error ? <ErrorMessage error={error} />
+                    : !hasLoaded ? <LoadingState />
+                    : <SettlementList settlements={settlements} groupCurrency={groupCurrency} />}
+            </div>
+        </Card>
     )
 }
 

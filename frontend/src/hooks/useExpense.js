@@ -3,26 +3,28 @@ import { createExpense, updateExpense as updateExpenseService, getExpensesByInte
 
 export function useExpense(groupId) {
     const [integrantExpenses, setIntegrantExpenses] = useState([])
-    const [loading, setLoading] = useState(false)
-    const [error, setError] = useState(null)
+    const [loading, setLoading] = useState(false)   // reading an integrant's expenses
+    const [saving, setSaving] = useState(false)     // adding, editing or deleting one
+    const [error, setError] = useState(null)         // of the last add / edit / delete
+    const [loadError, setLoadError] = useState(null)  // of reading the list
     const [currentIntegrantId, setCurrentIntegrantId] = useState(null)
 
     async function loadByIntegrant(integranId) {
         setLoading(true)
-        setError(null)
+        setLoadError(null)
         try {
             const foundExpenses = await getExpensesByIntegrant(groupId, integranId)
             setIntegrantExpenses(foundExpenses)
             setCurrentIntegrantId(integranId)
         } catch (error) {
-            setError(error)
+            setLoadError(error)
         } finally {
             setLoading(false)
         }
     }
 
     async function addExpense(data) {
-        setLoading(true)
+        setSaving(true)
         setError(null)
         try {
             const created = await createExpense(groupId, data)
@@ -33,12 +35,12 @@ export function useExpense(groupId) {
         } catch(error) {
             setError(error)
         } finally {
-            setLoading(false)
+            setSaving(false)
         }
     }
 
     async function updateExpense(expenseId, data) {
-        setLoading(true)
+        setSaving(true)
         setError(null)
         try {
             const updated = await updateExpenseService(groupId, expenseId, data)
@@ -57,12 +59,12 @@ export function useExpense(groupId) {
         } catch(error){
             setError(error)
         } finally {
-            setLoading(false)
+            setSaving(false)
         }
     }
 
     async function removeExpense(expenseId) {
-        setLoading(true)
+        setSaving(true)
         setError(null)
         try {
             await deleteExpense(groupId, expenseId)
@@ -71,11 +73,11 @@ export function useExpense(groupId) {
         } catch(error) {
             setError(error)
         } finally {
-            setLoading(false)
+            setSaving(false)
         }
     }
 
-    return {integrantExpenses, loading, error, loadByIntegrant, addExpense, updateExpense, removeExpense }
+    return {integrantExpenses, loading, saving, error, loadError, loadByIntegrant, addExpense, updateExpense, removeExpense }
 }
 
 
