@@ -6,4 +6,9 @@
     outline: 2px solid #1d4ed8;
     outline-offset: 2px;
   }
+
+  /* A sticky bar (the demo notice) must not cover what receives focus while scrolling (WCAG 2.4.11) */
+  html {
+    scroll-padding-top: 6rem;
+  }
 }
