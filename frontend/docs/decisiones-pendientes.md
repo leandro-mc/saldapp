@@ -8,7 +8,7 @@
 |------|-----------|
 | Rama de control | `dev` (ya existía; se sincronizó con `main`). La rama por defecto sigue siendo `main`. |
 | Credenciales en código e historial | Revisados el árbol y los 56 commits de todas las ramas. **No hay credenciales.** Es una aplicación de navegador: todo lo que lleva `VITE_*` queda visible en el paquete final, así que nunca debe contener secretos. |
-| Ramas existentes | `dev`, seis ramas `feat/*`, `setup`, `agents/mejorar-interfaz-presentacion-gastos` y `main` (ver D-03 y D-10). |
+| Ramas existentes | `dev`, seis ramas `feat/*`, `setup` y `main` (ver D-10). `agents/mejorar-interfaz-presentacion-gastos` se descartó y eliminó (D-03). |
 
 ## Resumen por capas
 
@@ -37,7 +37,7 @@
 - **Contexto:** tiene 1 commit sin fusionar (23-ago-2026, 9 archivos, +418 −149) que reorganiza la sección de integrantes (`IntegrantsSection.jsx`), añade un componente `Modal.jsx` y modifica `GroupPage.jsx`.
 - **Opciones:** (A) revisar el cambio y fusionarlo a `dev`; (B) rescatar solo partes (por ejemplo el modal); (C) descartarlo.
 - **Recomendación:** A tras revisar accesibilidad del modal (D-07).
-- **Esfuerzo:** bajo. **Decisión:** ☐ pendiente
+- **Esfuerzo:** bajo. **Decisión:** ☑ (C) descartada el 26-nov-2026. La rama se eliminó del remoto; su único commit sigue siendo `cb81311` por si hiciera falta consultarlo. El modal y la reorganización de integrantes se resolvieron de otra forma en `feat/demo-mode` (ver `docs/ux-research.md`).
 
 ### D-04 · Estado del servidor
 - **Contexto:** cada hook (`useGroup`, `useExpense`, ...) repite la lógica de carga, error y recarga.

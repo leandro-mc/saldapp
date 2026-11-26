@@ -70,5 +70,4 @@ Otros datos verificados en Chrome: sin desbordamiento horizontal en ninguna pant
 
 - **Lista de todos los gastos del grupo**: hoy solo se ven los gastos de un integrante a la vez, porque el backend no expone `GET /groups/{id}/expenses`. Es la mejora de usabilidad de mayor valor que queda y requiere un endpoint nuevo.
 - **Mensajes de la API en inglés** ("Description must be between 4 and 500 characters"): hoy se muestran tal cual junto al campo. Lo ideal es devolver códigos de error y traducirlos en el frontend.
-- **Rama `frontend/agents-mejorar-interfaz-gastos`**: tiene un commit sin integrar que toca los mismos archivos (formularios, `IntegrantsSection`, `GroupPage`, un `Modal`). Habrá conflictos al combinarla con esta; conviene decidir cuál prevalece (ver `docs/decisiones-pendientes.md`).
 - Recordar el integrante seleccionado en la URL para poder compartir o recargar esa vista.
