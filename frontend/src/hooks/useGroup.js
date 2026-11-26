@@ -25,17 +25,14 @@ export function useGroup(groupId){
         if (groupId) fetchGroup()
     }, [groupId])
 
+    // Re-reads the group after something changed. It doesn't touch `loading` (that is the first load):
+    // the page keeps showing what it has, so forms, focus and scroll position survive the update.
     async function refresh() { 
         if (!groupId) return
-        setLoading(true)
-        setError(null)
         try {
-            const data = await getGroup(groupId)
-            setGroup(data)
+            setGroup(await getGroup(groupId))
         } catch (err) {
             setError(err)
-        } finally {
-            setLoading(false)
         }
     }
 
@@ -59,6 +56,7 @@ export function useGroup(groupId){
         try {
             const closed = await closeGroup(groupId)
             setGroup(closed)
+            return closed
         } catch (err) {
             setActionError(err)
         } finally {

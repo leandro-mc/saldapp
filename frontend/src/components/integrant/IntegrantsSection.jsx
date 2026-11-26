@@ -1,74 +1,83 @@
 import { useState } from 'react'
-import IntegrantForm from '../integrant/IntegrantForm'
-import IntegrantList from '../integrant/IntegrantList'
-import LoadingState from '../shared/LoadingState'
+import Card from '../shared/Card'
+import ConfirmDialog from '../shared/ConfirmDialog'
 import ErrorMessage from '../shared/ErrorMessage'
-import { useBalance } from '../../hooks/useBalance'
+import LoadingState from '../shared/LoadingState'
+import { formatMoney } from '../../utils/moneyUtils'
+import IntegrantList from './IntegrantList'
+import IntegrantModal from './IntegrantModal'
 
-function IntegrantsSection({ 
-        groupId, groupCurrency, isClosed, integrants, integrantLoading, integrantError, 
-        addIntegrant, updateIntegrant, removeIntegrant, onDetails, onMutation 
+/**
+ * Balances of the group's integrants, with edit and delete.
+ *
+ * @param {Object} props
+ * @param {Object} props.integrantApi  Result of useIntegrant
+ * @param {(message?: string) => void} props.onMutation  Called after a change, so the page re-reads what depends on it
+ */
+function IntegrantsSection({
+    balances, loading, error, groupCurrency, isClosed, selectedId, integrantApi, onSelect, onMutation,
 }) {
-    const { integrantsBalances, loading, error, refresh } = useBalance(groupId)
+    const [editing, setEditing] = useState(null)    // balance row being edited
+    const [deleting, setDeleting] = useState(null)  // balance row being deleted
+    const [deleteAttempted, setDeleteAttempted] = useState(false)  // so an old failure of another action isn't shown here
 
-    const [editingIntegrant, setEditingIntegrant] = useState(null)
-
-    async function handleMutation() {
-        await refresh()
-        onMutation?.()
+    async function handleUpdate(data) {
+        const updated = await integrantApi.updateIntegrant(editing.integrantId, data)
+        if (updated) onMutation('Integrante actualizado.')
+        return updated
     }
 
-    if (loading) return <LoadingState />
-    if (error) return <ErrorMessage error={error} />
-    
-    if (editingIntegrant) return (
-        <div className="flex-1 w-full bg-white p-5 rounded-lg shadow-sm border border-gray-200">
-            <IntegrantForm 
-                key={editingIntegrant.id}
-                initialData={editingIntegrant}
-                loading={integrantLoading}
-                error={integrantError}
-                onSubmit={async (data) => {
-                    const updated = await updateIntegrant(editingIntegrant.id, data)
-                    if (updated) {
-                        setEditingIntegrant(null)
-                        handleMutation()
-                    }
-                }}
-            />
-        </div>
-    )
+    function closeDelete() {
+        setDeleting(null)
+        setDeleteAttempted(false)
+    }
+
+    async function handleDelete() {
+        setDeleteAttempted(true)
+        const removed = await integrantApi.removeIntegrant(deleting.integrantId)
+        if (!removed) return
+        closeDelete()
+        onMutation(`${deleting.integrantName} se eliminó del grupo.`)
+    }
+
+    // Anyone who paid something has expenses, and the backend refuses to delete them: say so up front
+    const hasExpenses = deleting && deleting.totalPaid > 0
 
     return (
-        <div className="flex-1 w-full bg-white p-5 rounded-lg shadow-sm border border-gray-200">
-            {!isClosed &&(
-                <div className="mb-6 pb-4 border-b border-gray-100">
-                    <IntegrantForm
-                        loading={integrantLoading}
-                        error={integrantError}
-                        onSubmit={async (data) => {
-                            const added = await addIntegrant(data)
-                            if (added) handleMutation()                    
-                        }}
-                    />
-                </div>
+        <Card title="Integrantes y balances">
+            {loading ? <LoadingState /> : error ? <ErrorMessage error={error} /> : (
+                <IntegrantList
+                    groupCurrency={groupCurrency}
+                    integrantsBalances={balances}
+                    selectedId={selectedId}
+                    disabled={isClosed}
+                    onSelect={onSelect}
+                    onEdit={setEditing}
+                    onDelete={setDeleting}
+                />
             )}
-            <IntegrantList 
-                groupCurrency={groupCurrency}
-                integrantsBalances={integrantsBalances}
-                onEdit={ (integrantId) => {
-                    const integrant = integrants.find(i => i.id === integrantId)
-                    setEditingIntegrant(integrant)
-                    }
-                }
-                onDelete={async (integrantId) => {
-                    const check = await removeIntegrant(integrantId)
-                    if (check) handleMutation()
-                }}
-                onDetails={onDetails}
-                disabled={isClosed}
+
+            <IntegrantModal
+                isOpen={editing !== null}
+                integrant={editing && { name: editing.integrantName }}
+                loading={integrantApi.loading}
+                error={integrantApi.actionError}
+                onSubmit={handleUpdate}
+                onClose={() => setEditing(null)}
             />
-        </div>
+
+            <ConfirmDialog
+                isOpen={deleting !== null}
+                title="Eliminar integrante"
+                message={hasExpenses
+                    ? `${deleting.integrantName} pagó ${formatMoney(deleting.totalPaid, groupCurrency)} en gastos, así que no se puede eliminar. Primero eliminá o reasigná esos gastos.`
+                    : `¿Seguro que querés eliminar a ${deleting?.integrantName}?`}
+                confirmLabel="Eliminar"
+                error={deleteAttempted ? integrantApi.actionError : null}
+                onConfirm={hasExpenses ? undefined : handleDelete}
+                onCancel={closeDelete}
+            />
+        </Card>
     )
 }
 

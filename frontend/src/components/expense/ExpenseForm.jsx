@@ -1,85 +1,128 @@
 import { useState } from 'react'
-import SelectList from '../shared/SelectList'
+import { todayInputValue } from '../../utils/dateUtils'
+import { useFormValidation } from '../../hooks/useFormValidation'
+import Button from '../shared/Button'
 import ErrorMessage from '../shared/ErrorMessage'
+import FormField from '../shared/FormField'
+import SelectList from '../shared/SelectList'
+import { controlClassName } from '../shared/controlStyles'
 
-
-function ExpenseForm({ initialData = {}, integrants, onSubmit, loading, error }){
+/**
+ * Adds an expense, or edits one (`isEditing`: the date can't change, so it isn't asked again).
+ * `onSubmit` must resolve to something truthy when it saved; after adding, description and amount
+ * are emptied (payer and date stay: consecutive expenses usually share them) so several can be
+ * entered in a row.
+ *
+ * @param {Object} props
+ * @param {string} props.groupCurrency
+ * @param {string} [props.cancelLabel]  Label of the secondary button, shown only with `onCancel`
+ */
+function ExpenseForm({
+    initialData = {}, isEditing = false, integrants, groupCurrency,
+    onSubmit, onCancel, cancelLabel = 'Cancelar', loading, error,
+}){
     const [payedBy, setPayedBy] = useState(initialData.payedBy || '')
     const [description, setDescription] = useState(initialData.description || '')
     const [amount, setAmount] = useState(initialData.amount || '')
-    const [date, setDate] = useState(initialData.date || '')
+    const [date, setDate] = useState(todayInputValue())
+    const { formRef, errorOf, check, clear } = useFormValidation(error)
 
-    function handleSubmit(e) {
+    async function handleSubmit(e) {
         e.preventDefault()
-        const isoDate = date ? date + 'T00:00:00' : ''
-        onSubmit({ payedBy, description, amount, date: isoDate })
+
+        const problems = {}
+        if (!payedBy) problems.payedBy = 'Elegí quién pagó.'
+        // Same limit as the backend's @Size(min = 4): saying it here avoids a round trip and an English message
+        if (description.trim().length < 4) problems.description = 'Describí el gasto con al menos 4 caracteres.'
+        if (!(Number(amount) > 0)) problems.amount = 'Ingresá un monto mayor a 0.'
+        if (!isEditing && !date) problems.date = 'Elegí la fecha del gasto.'
+        if (!check(problems)) return
+
+        const saved = await onSubmit({
+            payedBy,
+            description,
+            amount,
+            ...(isEditing ? {} : { date: date + 'T00:00:00' }),
+        })
+        if (saved && !isEditing) {
+            setDescription('')
+            setAmount('')
+            formRef.current.querySelector('input').focus()
+        }
     }
 
-    const isEditing = !!initialData.payedBy
-
     return (
-        <form onSubmit={handleSubmit} className='space-y-3'>
-            <h3 className="text-base font-bold text-blue-700 mb-3 border-b pb-2">
-                {isEditing ? 'Editar Gasto' : 'Agregar Gasto'}
-            </h3>
+        <form ref={formRef} onSubmit={handleSubmit} noValidate className="space-y-4">
+            <FormField label="Pagado por" error={errorOf('payedBy')}>
+                {props => (
+                    <SelectList
+                        {...props}
+                        options={integrants}
+                        getLabel={integrant => integrant.name}
+                        getValue={integrant => integrant.id}
+                        value={payedBy}
+                        onChange={value => { setPayedBy(value); clear('payedBy') }}
+                        placeholder="Seleccionar integrante"
+                    />
+                )}
+            </FormField>
 
-            <div>
-                <label className="block text-xs font-medium text-gray-700">Pagado por</label>
-                <SelectList 
-                    options={integrants}
-                    getLabel={integrant => integrant.name}
-                    getValue={integrant => integrant.id}
-                    value={payedBy}
-                    onChange={setPayedBy}
-                    placeholder="Seleccionar integrante"
-                />
-            </div>
-            <div>
-                <label className="block text-xs font-medium text-gray-700">Descripción</label>
-                <input 
-                    value={description} 
-                    onChange={e => setDescription(e.target.value)} 
-                    placeholder="Ej: Peajes de ida" 
-                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-sm focus:outline-none 
-                                focus:border-blue-500 focus-ring-1 focus-ring-blue-500"
-                />
-            </div>
+            <FormField label="Descripción" error={errorOf('description')}>
+                {props => (
+                    <input
+                        {...props}
+                        value={description}
+                        onChange={e => { setDescription(e.target.value); clear('description') }}
+                        placeholder="Ej: Peajes de ida"
+                        autoComplete="off"
+                        className={controlClassName}
+                    />
+                )}
+            </FormField>
 
-            <div>
-                <label className="block text-xs font-medium text-gray-700">Monto</label>
-                <input 
-                    type="number" 
-                    value={amount} 
-                    onChange={e => setAmount(e.target.value)} 
-                    placeholder="0.00" 
-                    className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-sm focus:outline-none 
-                                focus:border-blue-500 focus-ring-1 focus-ring-blue-500"
-                />
-            </div>
+            <FormField label="Monto" error={errorOf('amount')}>
+                {props => (
+                    <div className="flex">
+                        <span className="flex items-center rounded-l-md border border-r-0 border-gray-400 bg-gray-50 px-3 text-gray-700">
+                            {groupCurrency.trim()}
+                        </span>
+                        <input
+                            {...props}
+                            type="number"
+                            inputMode="decimal"
+                            step="0.01"
+                            min="0"
+                            value={amount}
+                            onChange={e => { setAmount(e.target.value); clear('amount') }}
+                            placeholder="0.00"
+                            className={`${controlClassName} rounded-l-none`}
+                        />
+                    </div>
+                )}
+            </FormField>
 
             {!isEditing && (
-                <div>
-                    <label className="block text-xs font-medium text-gray-700">Fecha del gasto</label>
-                    <input 
-                        type="date" 
-                        value={date} 
-                        onChange={e => setDate(e.target.value)} 
-                        className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-sm focus:outline-none 
-                                focus:border-blue-500 focus-ring-1 focus-ring-blue-500"
-                    />
-                </div>
+                <FormField label="Fecha del gasto" error={errorOf('date')}>
+                    {props => (
+                        <input
+                            {...props}
+                            type="date"
+                            value={date}
+                            onChange={e => { setDate(e.target.value); clear('date') }}
+                            className={controlClassName}
+                        />
+                    )}
+                </FormField>
             )}
 
-            <button 
-                type="submit" 
-                disabled={loading}
-                className="w-full bg-gray-800 text-white py-2 px-4 rounded-md hover:bg-gray-900 transition-colors
-                            text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed mt-1"
-            >
-                {loading ? 'Guardando...' : 'Guardar'}
-            </button>
+            <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                {onCancel && <Button onClick={onCancel}>{cancelLabel}</Button>}
+                <Button type="submit" variant="primary" disabled={loading}>
+                    {loading ? 'Guardando…' : isEditing ? 'Guardar cambios' : 'Agregar gasto'}
+                </Button>
+            </div>
 
-            <ErrorMessage error={error} />
+            <ErrorMessage error={error} inline />
         </form>
     )
 }

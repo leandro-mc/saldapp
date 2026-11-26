@@ -1,29 +1,24 @@
-function ConfirmDialog({ isOpen, message, onConfirm, onCancel }) {
-    if (!isOpen) return null
+import Button from './Button'
+import ErrorMessage from './ErrorMessage'
+import Modal from './Modal'
 
+/**
+ * Asks for confirmation before something that can't be undone. Focus starts on the safe option
+ * ("Cancelar"), so an accidental Enter doesn't destroy anything.
+ *
+ * Without `onConfirm` it only informs (for something that can't be done) and offers "Entendido".
+ * `error` keeps the dialog useful when the action fails: the reason is shown right there.
+ */
+function ConfirmDialog({ isOpen, title = 'Confirmar acción', message, confirmLabel = 'Confirmar', error, onConfirm, onCancel }) {
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            {/* La tarjeta del dialog */}
-            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm mx-4">
-                <p className="text-gray-800 font-medium mb-6">{message}</p>
-                <div className="flex gap-3 justify-end">
-                    <button 
-                        onClick={onConfirm}                        
-                        className="px-4 py-2 text-sm rounded-md bg-red-700 text-white
-                                    hover:bg-red-900 transition-colors font-medium"
-                    >
-                        Confirmar
-                    </button>
-                    <button 
-                        onClick={onCancel}
-                        className="px-4 py-2 text-sm rounded-md border border-gray-300
-                                    text-gray-700 hover:bg-gray-100 transition-colors"
-                    >
-                        Cancelar
-                    </button>
-                </div>                
+        <Modal isOpen={isOpen} title={title} onClose={onCancel}>
+            <p className="text-gray-700">{message}</p>
+            <ErrorMessage error={error} />
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                <Button onClick={onCancel} data-autofocus>{onConfirm ? 'Cancelar' : 'Entendido'}</Button>
+                {onConfirm && <Button variant="dangerSolid" onClick={onConfirm}>{confirmLabel}</Button>}
             </div>
-        </div>
+        </Modal>
     )
 }
 

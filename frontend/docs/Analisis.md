@@ -28,5 +28,5 @@ Es un buen punto de partida: la UI no llama a la API directamente.
 
 - **Accesibilidad:** revisar etiquetas de formularios, foco en diálogos de confirmación y contraste.
 - **Variables de entorno:** `VITE_APP_NAME` se define en `.env.example`; verificar que realmente se use.
-- **Rama sin integrar:** existe `agents/mejorar-interfaz-presentacion-gastos`, con cambios posteriores a `main`. Revisar y fusionar o eliminar.
+- **Rama sin integrar:** existía `agents/mejorar-interfaz-presentacion-gastos`, con cambios posteriores a `main`; se descartó y eliminó el 26-nov-2026 (D-03).
 - Falta CI (lint + build en cada push) y despliegue automatizado.
